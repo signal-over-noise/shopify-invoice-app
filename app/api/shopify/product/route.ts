@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
         { status: 404 }
       );
     }
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json(
       { success: false, error: 'Failed to fetch product' },
       { status: 500 }

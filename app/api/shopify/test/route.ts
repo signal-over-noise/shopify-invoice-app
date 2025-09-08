@@ -8,7 +8,7 @@ export async function GET() {
     const result = await shopifyClient.testConnection();
     
     if (result.success) {
-      console.log('Shopify connection successful:', result.store);
+      // console.log('Shopify connection successful:', result.store);
       return NextResponse.json({
         success: true,
         message: 'Connection successful',

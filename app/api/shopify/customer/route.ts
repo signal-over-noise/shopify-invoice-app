@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const customer = await shopifyClient.getCustomer(parseInt(customerId));
     
     // Debug: log the full customer object
-    console.log('Full customer object from Shopify:', customer);
+    // console.log('Full customer object from Shopify:', customer);
 
     if (customer) {
       return NextResponse.json({
