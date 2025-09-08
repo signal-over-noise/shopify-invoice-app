@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { ShopifyOrder } from '@/types/shopify';
 import { InvoiceData, InvoiceLineItem, InvoiceCustomer } from '@/types/invoice';
 import ProductSearchDropdown from '@/components/ProductSearchDropdown';
-import PDFViewer from '@/components/PDFViewer';
+// import PDFViewer from '@/components/PDFViewer';
 import CleanPDFPreview from '@/components/CleanPDFPreview';
 
 export default function InvoiceFormPage() {
