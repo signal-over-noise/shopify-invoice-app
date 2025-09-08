@@ -119,7 +119,7 @@ export default function DashboardPage() {
                 Select from existing Shopify orders and customize the invoice details
               </p>
               <button
-                onClick={() => alert('Coming soon - Shopify integration!')}
+                onClick={() => router.push('/dashboard/orders')}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 Select Order
@@ -142,7 +142,7 @@ export default function DashboardPage() {
                 Create a completely custom invoice with your own customer and product data
               </p>
               <button
-                onClick={() => alert('Coming soon - Custom invoice form!')}
+                onClick={() => router.push('/dashboard/invoice')}
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
               >
                 Create Custom

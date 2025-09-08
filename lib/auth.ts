@@ -5,6 +5,9 @@ interface TokenPayload {
   iat: number;
 }
 
+/**
+ * Creates a simple JWT-like token using base64 encoding
+ */
 export function createToken(username: string): string {
   const payload: TokenPayload = {
     username,
@@ -12,23 +15,32 @@ export function createToken(username: string): string {
     exp: Date.now() + (24 * 60 * 60 * 1000), // 24 hours
   };
   
-  return btoa(JSON.stringify(payload));
+  const token = btoa(JSON.stringify(payload));
+  return token;
 }
 
+/**
+ * Verifies and decodes the token
+ */
 export function verifyToken(token: string): TokenPayload | null {
   try {
     const payload: TokenPayload = JSON.parse(atob(token));
     
+    // Check if token is expired
     if (payload.exp < Date.now()) {
       return null;
     }
     
     return payload;
   } catch (error) {
+    console.error('Token verification failed:', error);
     return null;
   }
 }
 
+/**
+ * Validates admin credentials
+ */
 export function validateCredentials(username: string, password: string): boolean {
   return (
     username === process.env.ADMIN_USERNAME &&
@@ -36,6 +48,9 @@ export function validateCredentials(username: string, password: string): boolean
   );
 }
 
+/**
+ * Client-side token management
+ */
 export const tokenManager = {
   setToken: (token: string) => {
     if (typeof window !== 'undefined') {

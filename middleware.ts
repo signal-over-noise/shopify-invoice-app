@@ -1,91 +1,75 @@
-// middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-
-function verifyToken(token: string): any | null {
-  try {
-    const payload = JSON.parse(atob(token));
-    if (payload.exp < Date.now()) {
-      return null;
-    }
-    return payload;
-  } catch (error) {
-    return null;
-  }
-}
+import { verifyToken } from '@/lib/auth';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  console.log('Middleware running for:', pathname);
-  
-  // Skip middleware for static files and Next.js internals
-  if (
-    pathname.startsWith('/_next/') ||
-    pathname.startsWith('/api/_next/') ||
-    pathname === '/favicon.ico' ||
-    pathname.startsWith('/images/') ||
-    pathname.startsWith('/icons/')
-  ) {
-    return NextResponse.next();
-  }
-
-  // Public routes that don't need authentication
+  // Public routes that don't require authentication
   const publicRoutes = ['/', '/login'];
-  if (publicRoutes.includes(pathname)) {
-    console.log('Public route, allowing access');
+  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
+  
+  // API routes that don't require authentication
+  const publicApiRoutes = ['/api/auth/login'];
+  const isPublicApiRoute = publicApiRoutes.some(route => pathname.startsWith(route));
+  
+  // Allow public routes
+  if (isPublicRoute || isPublicApiRoute) {
     return NextResponse.next();
   }
-
-  // Public API routes
-  if (pathname.startsWith('/api/auth/')) {
-    console.log('Auth API route, allowing access');
-    return NextResponse.next();
-  }
-
-  // Check if this is a protected route
-  const protectedRoutes = ['/dashboard', '/test'];
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
-
-  if (isProtectedRoute) {
-    console.log('Protected route detected:', pathname);
-    
-    // Try to get token from multiple sources
-    const cookieToken = request.cookies.get('auth_token')?.value;
-    const authHeader = request.headers.get('authorization');
-    const bearerToken = authHeader?.replace('Bearer ', '');
-    
-    const token = cookieToken || bearerToken;
-    
-    console.log('Token found:', !!token);
-    
-    if (!token) {
-      console.log('No token found, redirecting to login');
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
-
-    const payload = verifyToken(token);
-    if (!payload) {
-      console.log('Invalid token, redirecting to login');
+  
+  // Check for authentication token
+  const token = request.headers.get('authorization')?.replace('Bearer ', '') ||
+                request.cookies.get('auth_token')?.value;
+  
+  if (!token) {
+    // Redirect to login for dashboard routes
+    if (pathname.startsWith('/dashboard')) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
     
-    console.log('Token valid, allowing access');
-  }
-
-  // For API routes that need protection (excluding auth routes)
-  if (pathname.startsWith('/api/') && !pathname.startsWith('/api/auth/')) {
-    const token = request.cookies.get('auth_token')?.value || 
-                  request.headers.get('authorization')?.replace('Bearer ', '');
-    
-    if (!token || !verifyToken(token)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Return 401 for API routes
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
     }
   }
-
+  
+  // Verify token
+  const payload = verifyToken(token!);
+  if (!payload) {
+    // Redirect to login for dashboard routes
+    if (pathname.startsWith('/dashboard')) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+    
+    // Return 401 for API routes
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json(
+        { error: 'Invalid or expired token' },
+        { status: 401 }
+      );
+    }
+  }
+  
+  // Add user info to request headers for API routes
+  if (pathname.startsWith('/api/') && payload) {
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set('x-user', JSON.stringify(payload));
+    
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+  }
+  
   return NextResponse.next();
 }
 
+// Configure which routes to run middleware on
 export const config = {
   matcher: [
     /*
@@ -93,7 +77,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - public folder
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
   ],
 };
