@@ -1,8 +1,8 @@
 // app/dashboard/page.tsx
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
@@ -18,30 +18,32 @@ export default function DashboardPage() {
     if (!mounted) return;
 
     const checkAuth = () => {
-      const token = localStorage.getItem('auth_token');
-      
+      const token = localStorage.getItem("auth_token");
+
       if (!token) {
-        router.replace('/login');
+        router.replace("/login");
         return;
       }
-      
+
       try {
         const payload = JSON.parse(atob(token));
         const isValid = payload.exp > Date.now();
-        
+
         if (!isValid) {
-          localStorage.removeItem('auth_token');
-          document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-          router.replace('/login');
+          localStorage.removeItem("auth_token");
+          document.cookie =
+            "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+          router.replace("/login");
           return;
         }
-        
+
         setIsAuthenticated(true);
         setLoading(false);
       } catch (error) {
-        localStorage.removeItem('auth_token');
-        document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-        router.replace('/login');
+        localStorage.removeItem("auth_token");
+        document.cookie =
+          "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        router.replace("/login");
       }
     };
 
@@ -49,8 +51,8 @@ export default function DashboardPage() {
   }, [mounted, router]);
 
   const handleLogout = () => {
-    localStorage.removeItem('auth_token');
-    router.replace('/login');
+    localStorage.removeItem("auth_token");
+    router.replace("/login");
   };
 
   // Prevent hydration issues
@@ -80,7 +82,7 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <h1 className="text-xl font-semibold text-slate-900">
-              Invoice Management
+              Atelier Invoice Management
             </h1>
             <button
               onClick={handleLogout}
@@ -108,18 +110,29 @@ export default function DashboardPage() {
           <div className="group bg-white border border-slate-200 rounded-xl p-6 hover:shadow-lg hover:border-slate-300 transition-all duration-200">
             <div className="flex flex-col items-center text-center">
               <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                <svg
+                  className="w-6 h-6 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
                 </svg>
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">
                 Auto Order
               </h3>
               <p className="text-slate-600 mb-6 text-sm leading-relaxed">
-                Select from existing Shopify orders and customize the invoice details
+                Select from existing Shopify orders and customize the invoice
+                details
               </p>
               <button
-                onClick={() => router.push('/dashboard/orders')}
+                onClick={() => router.push("/dashboard/orders")}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 Select Order
@@ -131,18 +144,29 @@ export default function DashboardPage() {
           <div className="group bg-white border border-slate-200 rounded-xl p-6 hover:shadow-lg hover:border-slate-300 transition-all duration-200">
             <div className="flex flex-col items-center text-center">
               <div className="w-12 h-12 bg-emerald-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-emerald-100 transition-colors">
-                <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                <svg
+                  className="w-6 h-6 text-emerald-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
                 </svg>
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">
                 Custom Order
               </h3>
               <p className="text-slate-600 mb-6 text-sm leading-relaxed">
-                Create a completely custom invoice with your own customer and product data
+                Create a completely custom invoice with your own customer and
+                product data
               </p>
               <button
-                onClick={() => router.push('/dashboard/invoice')}
+                onClick={() => router.push("/dashboard/invoice")}
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
               >
                 Create Custom
