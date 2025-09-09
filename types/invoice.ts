@@ -14,7 +14,8 @@ export interface InvoiceLineItem {
 export interface InvoiceCustomer {
   name: string;
   email: string;
-  phone?: string;
+  mobile?: string;
+  telephone?: string;
   address: {
     line1: string;
     line2?: string;

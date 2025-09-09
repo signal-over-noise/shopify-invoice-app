@@ -83,463 +83,195 @@ export default function Atelier001Preview({
               paddingLeft: "30px",
             }}
           >
-            <div style={{ width: "100%" }}>
-              <div style={{ display: "flex", marginBottom: "3px" }}>
-                <div
-                  style={{
-                    width: "45%",
-                    textAlign: "left",
-                    fontWeight: 400,
-                    fontSize: "11px",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "1rem",
-                      fontWeight: 400,
-                      marginBottom: "0.5em",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    PRO FORMA INVOICE
-                  </div>
-                </div>
-                <div
-                  style={{
-                    width: "55%",
-                    textAlign: "left",
-                    fontSize: "11px",
-                    lineHeight: "1.4",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "1rem",
-                      fontWeight: 400,
-                      marginBottom: "0.5em",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    RE{invoiceData.invoice_number}
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ display: "flex", marginBottom: "3px" }}>
-                <div
-                  style={{
-                    width: "45%",
-                    textAlign: "left",
-                    fontWeight: 400,
-                    fontSize: "11px",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  ISSUE DATE
-                </div>
-                <div
-                  style={{
-                    width: "55%",
-                    textAlign: "left",
-                    fontSize: "11px",
-                    lineHeight: "1.4",
-                  }}
-                >
-                  {new Date(invoiceData.invoice_date).toLocaleDateString(
-                    "en-GB",
-                    { day: "numeric", month: "long", year: "numeric" }
-                  )}
-                </div>
-              </div>
-
-              <div style={{ display: "flex", marginBottom: "3px" }}>
-                <div
-                  style={{
-                    width: "45%",
-                    textAlign: "left",
-                    fontWeight: 400,
-                    fontSize: "11px",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  CLIENT REFERENCE
-                </div>
-                <div
-                  style={{
-                    width: "55%",
-                    textAlign: "left",
-                    fontSize: "11px",
-                    lineHeight: "1.4",
-                  }}
-                >
-                  {invoiceData.client_reference || "N/A"}
-                </div>
-              </div>
-
-              <div style={{ display: "flex", marginBottom: "3px" }}>
-                <div
-                  style={{
-                    width: "45%",
-                    textAlign: "left",
-                    fontWeight: 400,
-                    fontSize: "11px",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  DELIVERY TERMS
-                </div>
-                <div
-                  style={{
-                    width: "55%",
-                    textAlign: "left",
-                    fontSize: "11px",
-                    lineHeight: "1.4",
-                  }}
-                >
-                  {invoiceData.delivery_terms || "EXW"}
-                </div>
-              </div>
-
-              <div style={{ display: "flex", marginBottom: "3px" }}>
-                <div
-                  style={{
-                    width: "45%",
-                    textAlign: "left",
-                    fontWeight: 400,
-                    fontSize: "11px",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  COMPANY DETAILS
-                </div>
-                <div
-                  style={{
-                    width: "55%",
-                    textAlign: "left",
-                    fontSize: "11px",
-                    lineHeight: "1.4",
-                  }}
-                >
-                  {invoiceData.customer.name}
-                  <br />
-                  {invoiceData.billing_address.line1 && (
-                    <>
-                      {invoiceData.billing_address.line1}
-                      <br />
-                    </>
-                  )}
-                  {invoiceData.billing_address.line2 && (
-                    <>
-                      {invoiceData.billing_address.line2}
-                      <br />
-                    </>
-                  )}
-                  {invoiceData.billing_address.city && (
-                    <>
-                      {invoiceData.billing_address.city}
-                      <br />
-                    </>
-                  )}
-                  {invoiceData.billing_address.zip && (
-                    <>
-                      {invoiceData.billing_address.zip}
-                      <br />
-                    </>
-                  )}
-                  {invoiceData.billing_address.country}
-                </div>
-              </div>
-
-              <div style={{ display: "flex", marginBottom: "3px" }}>
-                <div
-                  style={{
-                    width: "45%",
-                    textAlign: "left",
-                    fontWeight: 400,
-                    fontSize: "11px",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  CONTACT
-                </div>
-                <div
-                  style={{
-                    width: "55%",
-                    textAlign: "left",
-                    fontSize: "11px",
-                    lineHeight: "1.4",
-                  }}
-                >
-                  {invoiceData.customer.name}
-                </div>
-              </div>
-
-              <div style={{ display: "flex", marginBottom: "3px" }}>
-                <div
-                  style={{
-                    width: "45%",
-                    textAlign: "left",
-                    fontWeight: 400,
-                    fontSize: "11px",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  EMAIL
-                </div>
-                <div
-                  style={{
-                    width: "55%",
-                    textAlign: "left",
-                    fontSize: "11px",
-                    lineHeight: "1.4",
-                  }}
-                >
-                  {invoiceData.customer.email}
-                </div>
-              </div>
-
-              <div style={{ display: "flex", marginBottom: "3px" }}>
-                <div
-                  style={{
-                    width: "45%",
-                    textAlign: "left",
-                    fontWeight: 400,
-                    fontSize: "11px",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  PHONE
-                </div>
-                <div
-                  style={{
-                    width: "55%",
-                    textAlign: "left",
-                    fontSize: "11px",
-                    lineHeight: "1.4",
-                  }}
-                >
-                  {invoiceData.customer.phone || "N/A"}
-                </div>
-              </div>
-            </div>
+            <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "70px" }}>
+              <tbody>
+                      <tr style={{ width: "100%"}}>
+                        <th
+                          style={{
+                            textAlign: "left",
+                            fontSize: "1rem",
+                            fontWeight: 400,
+                            marginBottom: "1.0em",
+                            letterSpacing: "0.5px",
+                            paddingBottom: "15px",
+                            color: "#000",
+                          }}
+                        >
+                          PRO FORMA INVOICE 
+                        </th>
+                        <th
+                          style={{
+                            textAlign: "left",
+                            fontSize: "1rem",
+                            fontWeight: 400,
+                            marginBottom: "1.0em",
+                            letterSpacing: "0.5px",
+                            paddingBottom: "15px",
+                            color: "#000",
+                          }}
+                        >
+                          RE{invoiceData.invoice_number}
+                        </th>
+                      </tr>
+                      
+                      <tr>
+                        <td
+                        style={{
+                          width: "50%",
+                          textAlign: "left",
+                          fontWeight: 400,
+                          paddingTop: "4px",
+                          fontSize: "11px",
+                          textTransform: "uppercase",
+                        }}>
+                          ISSUE DATE
+                        </td>
+                        <td>
+                          {new Date(invoiceData.invoice_date).toLocaleDateString(
+                            "en-GB",
+                            { day: "numeric", month: "long", year: "numeric" }
+                          )}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                        style={{
+                          width: "50%",
+                          textAlign: "left",
+                          fontWeight: 400,
+                          paddingTop: "4px",
+                          fontSize: "11px",
+                          textTransform: "uppercase",
+                        }}>
+                          CLIENT REFERENCE
+                        </td>
+                        <td>
+                          {invoiceData.client_reference || "N/A"}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                        style={{
+                          width: "50%",
+                          textAlign: "left",
+                          fontWeight: 400,
+                          paddingTop: "4px",
+                          fontSize: "11px",
+                          textTransform: "uppercase",
+                        }}>
+                          DELIVERY TERMS
+                        </td>
+                        <td>
+                          {invoiceData.delivery_terms || "EXW"}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                        style={{
+                          width: "50%",
+                          textAlign: "left",
+                          fontWeight: 400,
+                          paddingTop: "4px",
+                          fontSize: "11px",
+                          textTransform: "uppercase",
+                          verticalAlign: "top"
+                        }}>
+                          COMPANY DETAILS
+                        </td>
+                        <td>
+                            <br />
+                            {invoiceData.billing_address?.line1 && (
+                              <>
+                                {invoiceData.billing_address.line1}
+                                <br />
+                              </>
+                            )}
+                            {invoiceData.billing_address?.line2 && (
+                              <>
+                                {invoiceData.billing_address.line2}
+                                <br />
+                              </>
+                            )}
+                            {invoiceData.billing_address?.city && (
+                              <>
+                                {invoiceData.billing_address.city}
+                                <br />
+                              </>
+                            )}
+                            {invoiceData.billing_address?.zip && (
+                              <>
+                                {invoiceData.billing_address.zip}
+                                <br />
+                              </>
+                            )}
+                            {invoiceData.billing_address?.country && invoiceData.billing_address.country}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                        style={{
+                          width: "50%",
+                          textAlign: "left",
+                          fontWeight: 400,
+                          paddingTop: "4px",
+                          fontSize: "11px",
+                          textTransform: "uppercase",
+                        }}>
+                          CONTACT
+                        </td>
+                        <td>
+                          {invoiceData.customer.name}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                        style={{
+                          width: "50%",
+                          textAlign: "left",
+                          fontWeight: 400,
+                          paddingTop: "4px",
+                          fontSize: "11px",
+                          textTransform: "uppercase",
+                        }}>
+                          EMAIL
+                        </td>
+                        <td>
+                          {invoiceData.customer.email}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td
+                        style={{
+                          width: "50%",
+                          textAlign: "left",
+                          fontWeight: 400,
+                          paddingTop: "4px",
+                          fontSize: "11px",
+                          textTransform: "uppercase",
+                        }}>
+                         PHONE
+                        </td>
+                        <td>
+                          {[
+                            invoiceData.customer.telephone && `T ${invoiceData.customer.telephone}`,
+                            invoiceData.customer.mobile && `M ${invoiceData.customer.mobile}`
+                          ].filter(Boolean).join(' / ') || "N/A"}
+                        </td>
+                      </tr>
+              </tbody>
+          </table>
           </div>
 
           {/* Line Items */}
-          <div
-            style={{
-              width: "100%",
-              paddingLeft: "30px",
-              marginBottom: "1.5rem",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                paddingTop: "6px",
-                paddingBottom: "12px",
-                paddingLeft: "4px",
-                paddingRight: "4px",
-              }}
-            >
-              <div
-                style={{
-                  width: "45%",
-                  textAlign: "left",
-                  fontWeight: 400,
-                  fontSize: "11px",
-                  color: "#777",
-                }}
-              >
-                ITEM DETAILS
-              </div>
-              <div
-                style={{
-                  width: "25%",
-                  textAlign: "left",
-                  fontWeight: 400,
-                  fontSize: "11px",
-                  color: "#777",
-                }}
-              >
-                PRICE PER ITEM
-              </div>
-              <div
-                style={{
-                  width: "30%",
-                  textAlign: "left",
-                  fontWeight: 400,
-                  fontSize: "11px",
-                  color: "#777",
-                }}
-              >
-                TOTAL
-              </div>
-            </div>
-
-            {invoiceData.line_items.map((item, index) => (
-              <div
-                key={index}
-                style={{
-                  display: "flex",
-                  paddingTop: "15px",
-                  paddingBottom: "15px",
-                  paddingLeft: "4px",
-                  paddingRight: "4px",
-                  fontSize: "11px",
-                }}
-              >
-                <div style={{ width: "45%" }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      position: "relative",
-                    }}
-                  >
-                    <div style={{ width: "80px", flexShrink: 0 }}>
-                      <div
-                        style={{
-                          fontSize: "11px",
-                          marginBottom: "2px",
-                          display: "block",
-                        }}
-                      >
-                        QTY {item.quantity}
-                      </div>
-                      {item.product_id && productImages[item.product_id] ? (
-                        <img
-                          src={productImages[item.product_id]}
-                          alt={item.title}
-                          style={{
-                            width: "80px",
-                            height: "80px",
-                            objectFit: "cover",
-                            display: "block",
-                          }}
-                        />
-                      ) : (
-                        <div
-                          style={{
-                            width: "80px",
-                            height: "80px",
-                            backgroundColor: "#F5F5F5",
-                            borderRadius: "4px",
-                            display: "block",
-                          }}
-                        />
-                      )}
-                    </div>
-                    <div
-                      style={{
-                        flex: 1,
-                        paddingLeft: "16px",
-                        position: "absolute",
-                        left: "96px",
-                        top: 0,
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontWeight: 500,
-                          marginBottom: "4px",
-                          lineHeight: "1.3",
-                          fontSize: "11px",
-                        }}
-                      >
-                        {item.title}
-                      </div>
-                      <div
-                        style={{
-                          color: "#666",
-                          lineHeight: "1.4",
-                          fontSize: "10px",
-                        }}
-                      >
-                        {item.sku && `SKU: ${item.sku}`}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div style={{ width: "25%", textAlign: "left" }}>
-                  {invoiceData.currency} {item.price.toFixed(2)}
-                </div>
-                <div style={{ width: "30%", textAlign: "left" }}>
-                  {invoiceData.currency} {item.total.toFixed(2)}
-                </div>
-              </div>
-            ))}
-
-            <div
-              style={{
-                display: "flex",
-                paddingTop: "6px",
-                paddingBottom: "6px",
-                paddingLeft: "4px",
-                paddingRight: "4px",
-                fontSize: "11px",
-              }}
-            >
-              <div style={{ width: "70%", textAlign: "right" }}>SUBTOTAL</div>
-              <div style={{ width: "30%", textAlign: "left" }}>
-                {invoiceData.currency} {invoiceData.subtotal.toFixed(2)}
-              </div>
-            </div>
-
-            {invoiceData.discount_amount > 0 && (
-              <div
-                style={{
-                  display: "flex",
-                  paddingTop: "6px",
-                  paddingBottom: "6px",
-                  paddingLeft: "4px",
-                  paddingRight: "4px",
-                  fontSize: "11px",
-                }}
-              >
-                <div style={{ width: "70%", textAlign: "right" }}>
-                  Trade Discount{" "}
-                  {(
-                    (invoiceData.discount_amount / invoiceData.subtotal) *
-                    100
-                  ).toFixed(0)}
-                  %
-                </div>
-                <div style={{ width: "30%", textAlign: "left" }}>
-                  - {invoiceData.currency}{" "}
-                  {invoiceData.discount_amount.toFixed(2)}
-                </div>
-              </div>
-            )}
-
-            <div
-              style={{
-                display: "flex",
-                paddingTop: "6px",
-                paddingBottom: "6px",
-                paddingLeft: "4px",
-                paddingRight: "4px",
-                fontSize: "11px",
-                fontWeight: 500,
-              }}
-            >
-              <div style={{ width: "70%", textAlign: "right" }}>
-                TOTAL EX VAT
-              </div>
-              <div style={{ width: "30%", textAlign: "left" }}>
-                {invoiceData.currency} {invoiceData.total.toFixed(2)}
-              </div>
-            </div>
-          </div>
 
           <div
             style={{
               width: "100%",
               paddingLeft: "30px",
               marginBottom: "1.5rem",
+              marginTop: "3.5rem",
             }}
           >
-            <hr style={{ border: "none", borderTop: "1px solid #EEE" }} />
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr>
@@ -590,6 +322,7 @@ export default function Atelier001Preview({
                             color: "#777",
                             fontWeight: 400,
                             fontSize: "11px",
+                            paddingTop: "5px",
                           }}
                         >
                           QTY {item.quantity}
@@ -603,6 +336,7 @@ export default function Atelier001Preview({
                             color: "#777",
                             fontWeight: 400,
                             fontSize: "11px",
+                            paddingBottom: "20px",
                           }}
                         >
                           <div
@@ -666,6 +400,54 @@ export default function Atelier001Preview({
                     </>
                   );
                 })}
+                <tr>
+                  <td></td>
+                  <td style={{
+                            width: "25%",
+                            textAlign: "left",
+                            color: "#777",
+                            fontWeight: 400,
+                            fontSize: "11px",
+                          }}>SUBTOTAL</td>
+                  <td style={{
+                            width: "25%",
+                            textAlign: "left",
+                            color: "#777",
+                            fontWeight: 400,
+                            fontSize: "11px",
+                            verticalAlign: "top",
+                          }}>£ {invoiceData.total.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td 
+                    style={{
+                            width: "25%",
+                            textAlign: "left",
+                            color: "#777",
+                            fontWeight: 400,
+                            fontSize: "11px",
+                          }}
+                  >Trade Discount{" "}
+                  {(
+                    (invoiceData.discount_amount / invoiceData.subtotal) *
+                    100
+                  ).toFixed(0)}
+                  % </td>
+                  <td style={{
+                            width: "25%",
+                            textAlign: "left",
+                            color: "#777",
+                            fontWeight: 400,
+                            fontSize: "11px",
+                          }}>- £{" "}
+                  {invoiceData.discount_amount.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td style={{ paddingTop: "15px", color: "black", fontSize: "14px" }}>TOTAL EX VAT</td>
+                  <td style={{ paddingTop: "15px", color: "black", fontSize: "14px" }}>£ {invoiceData.total.toFixed(2)}</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -673,11 +455,13 @@ export default function Atelier001Preview({
           {/* Notes */}
           <div
             style={{
-              marginTop: "1.5rem",
+              marginTop: "2.5rem",
               lineHeight: "1.4",
               paddingLeft: "30px",
               marginBottom: "2.5rem",
               fontSize: "12px",
+              color: "#777",
+              fontWeight: 400,
             }}
           >
             <p>
@@ -692,104 +476,70 @@ export default function Atelier001Preview({
             </p>
 
             <div style={{ width: "100%", fontSize: "11px", marginTop: "1rem" }}>
-              <div style={{ display: "flex", marginBottom: "3px" }}>
-                <div
-                  style={{
-                    width: "47%",
-                    textAlign: "left",
-                    fontWeight: 400,
-                    textTransform: "uppercase",
-                  }}
-                >
-                  BANK NAME
+
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <tbody>
+                  <tr>
+                    <td style={{ width: "50%", paddingTop: "3px"}}>BANK NAME</td>
+                    <td style={{ width: "50%", paddingTop: "3px"}}>HSBC UK BANK PLC</td>
+                  </tr>
+                  <tr>
+                    <td style={{ width: "50%", paddingTop: "3px"}}>BANK ADDRESS</td>
+                    <td style={{ width: "50%", paddingTop: "3px"}}>PO Box 1EZ 196 Oxford Street, London W1D 1NT, UK</td>
+                  </tr>
+                  <tr>
+                    <td style={{ width: "50%", paddingTop: "3px"}}>IBAN</td>
+                    <td style={{ width: "50%", paddingTop: "3px"}}>GB36 HBUK 4005 1662 7431 08</td>
+                  </tr>
+                  <tr>
+                    <td style={{ width: "50%", paddingTop: "3px"}}>SWIFT</td>
+                    <td style={{ width: "50%", paddingTop: "3px"}}>HBUKGB4B</td>
+                  </tr>
+                  <tr>
+                    <td style={{ width: "50%", paddingTop: "3px"}}>ACCOUNT NO</td>
+                    <td style={{ width: "50%", paddingTop: "3px"}}>Atelier001 Ltd</td>
+                  </tr>
+                  <tr>
+                    <td style={{ width: "50%", paddingTop: "3px"}}>SORT CODE</td>
+                    <td style={{ width: "50%", paddingTop: "3px"}}>40-05-16</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {/* Footer */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              marginBottom: "3.5em",
+              position: "relative",
+              marginTop: "100px",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                bottom: 0,
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: "100%",
+              }}
+            >
+              <div
+                style={{
+                  textAlign: "center",
+                  fontWeight: 400,
+                  fontSize: "1.5rem",
+                  letterSpacing: "2px",
+                  lineHeight: "1.2",
+                }}
+              >
+                <div style={{ textAlign: "center", fontSize: "10px", color: "#777", marginTop: "3rem"}}>
+                  <p>ATELIER001 | UNIT 102 BUSPACE STUDIOS | CONLAN STREET | LONDON W10 5AP | UK</p>
+                  <p style={{ letterSpacing: "2px" }}>INFO@ATELIER001.COM | T +44(0)2037780858 | REG11953781 | VAT 334486000</p>
                 </div>
-                <div style={{ width: "53%", textAlign: "left" }}>
-                  HSBC UK BANK PLC
-                </div>
-              </div>
-              <div style={{ display: "flex", marginBottom: "3px" }}>
-                <div
-                  style={{
-                    width: "47%",
-                    textAlign: "left",
-                    fontWeight: 400,
-                    textTransform: "uppercase",
-                  }}
-                >
-                  BANK ADDRESS
-                </div>
-                <div style={{ width: "53%", textAlign: "left" }}>
-                  PO Box 1EZ 196 Oxford Street, London W1D 1NT, UK
-                </div>
-              </div>
-              <div style={{ display: "flex", marginBottom: "3px" }}>
-                <div
-                  style={{
-                    width: "47%",
-                    textAlign: "left",
-                    fontWeight: 400,
-                    textTransform: "uppercase",
-                  }}
-                >
-                  IBAN
-                </div>
-                <div style={{ width: "53%", textAlign: "left" }}>
-                  GB36 HBUK 4005 1662 7431 08
-                </div>
-              </div>
-              <div style={{ display: "flex", marginBottom: "3px" }}>
-                <div
-                  style={{
-                    width: "47%",
-                    textAlign: "left",
-                    fontWeight: 400,
-                    textTransform: "uppercase",
-                  }}
-                >
-                  SWIFT
-                </div>
-                <div style={{ width: "53%", textAlign: "left" }}>HBUKGB4B</div>
-              </div>
-              <div style={{ display: "flex", marginBottom: "3px" }}>
-                <div
-                  style={{
-                    width: "47%",
-                    textAlign: "left",
-                    fontWeight: 400,
-                    textTransform: "uppercase",
-                  }}
-                >
-                  ACCOUNT NAME
-                </div>
-                <div style={{ width: "53%", textAlign: "left" }}>
-                  {invoiceData.company.name}
-                </div>
-              </div>
-              <div style={{ display: "flex", marginBottom: "3px" }}>
-                <div
-                  style={{
-                    width: "47%",
-                    textAlign: "left",
-                    fontWeight: 400,
-                    textTransform: "uppercase",
-                  }}
-                >
-                  ACCOUNT NO
-                </div>
-                <div style={{ width: "53%", textAlign: "left" }}>62743108</div>
-              </div>
-              <div style={{ display: "flex", marginBottom: "3px" }}>
-                <div
-                  style={{
-                    width: "47%",
-                    textAlign: "left",
-                    fontWeight: 400,
-                    textTransform: "uppercase",
-                  }}
-                >
-                  SORT CODE
-                </div>
-                <div style={{ width: "53%", textAlign: "left" }}>40–05–16</div>
               </div>
             </div>
           </div>

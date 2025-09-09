@@ -13,11 +13,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const draftOrder = await shopifyClient.getDraftOrder(parseInt(draftOrderId));
+    const order = await shopifyClient.getDraftOrder(parseInt(draftOrderId));
 
     return NextResponse.json({
       success: true,
-      order: draftOrder
+      order
     });
 
   } catch (error) {

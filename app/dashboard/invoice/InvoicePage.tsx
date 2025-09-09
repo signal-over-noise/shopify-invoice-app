@@ -119,7 +119,11 @@ export default function InvoicePage() {
   const convertOrderToInvoice = async (orderData: ShopifyOrder) => {
     const companyDetails = await fetchShopDetails();
     const customerName = getCustomerName(orderData);
-    const customerEmail = orderData.email || "No email";
+    const customerEmail = orderData.email || "No email provided";
+    const totalDiscount = orderData.line_items.reduce(
+      (sum, item) => sum + parseFloat(item.total_discount || "0"), 
+      0
+    );
 
     const lineItems: InvoiceLineItem[] = orderData.line_items.map(
       (item, index) => ({
@@ -145,13 +149,14 @@ export default function InvoicePage() {
       customer: {
         name: customerName,
         email: customerEmail,
-        phone: orderData.customer?.default_address?.phone || "",
+        mobile: orderData.billing_address?.phone || orderData.customer?.phone || "",
+        telephone: "",
         address: extractAddress(
           orderData.shipping_address || orderData.billing_address
         ),
       },
 
-      billing_address: extractAddress(orderData.billing_address),
+      billing_address: extractAddress(orderData.billing_address || orderData.customer?.default_address),
       shipping_address: extractAddress(orderData.shipping_address),
       same_as_billing: !orderData.shipping_address,
 
@@ -159,7 +164,12 @@ export default function InvoicePage() {
       invoice_date: new Date().toISOString().split("T")[0],
       client_reference: "",
 
-      company: companyDetails,
+      company: {
+        name: "",
+        phone: companyDetails.phone,
+        address: companyDetails.address,
+      },
+
       delivery_terms: "EXW",
 
       line_items: lineItems,
@@ -168,7 +178,7 @@ export default function InvoicePage() {
       tax_rate: 0,
       tax_amount: parseFloat(orderData.total_tax || "0"),
       shipping_cost: 0,
-      discount_amount: 0,
+      discount_amount: totalDiscount,
       total: parseFloat(orderData.total_price),
 
       currency: orderData.currency,
@@ -187,7 +197,8 @@ export default function InvoicePage() {
       customer: {
         name: "",
         email: "",
-        phone: "",
+        mobile: "",
+        telephone: "",
         address: { line1: "", city: "", state: "", country: "", zip: "" },
       },
 
@@ -279,7 +290,7 @@ export default function InvoicePage() {
 
       if (data.success) {
         return {
-          name: data.shop.name || "Your Company Name",
+          name: data.shop.name || "",
           phone: data.shop.phone || "+44 123 456 7890",
           address: {
             line1: data.shop.address.line1 || "123 Business Street",
@@ -689,7 +700,7 @@ export default function InvoicePage() {
                 <h2 className="text-lg font-medium text-slate-900 mb-4">
                   Customer Information
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-900 mb-1">
                       Customer Name
@@ -722,16 +733,47 @@ export default function InvoicePage() {
                       className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 text-slate-900"
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-900 mb-1">
+                      Telephone
+                    </label>
+                    <input
+                      type="tel"
+                      value={invoiceData.customer.telephone || ""}
+                      onChange={(e) =>
+                        updateInvoiceData("customer", {
+                          ...invoiceData.customer,
+                          telephone: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 text-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-900 mb-1">
+                      Mobile
+                    </label>
+                    <input
+                      type="tel"
+                      value={invoiceData.customer.mobile || ""}
+                      onChange={(e) =>
+                        updateInvoiceData("customer", {
+                          ...invoiceData.customer,
+                          mobile: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 text-slate-900"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Company Details */}
               <div className="bg-white rounded-lg border border-slate-200 p-6">
                 <h2 className="text-lg font-medium text-slate-900 mb-4">
                   Company Details
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-900 mb-1">
                       Company Name
                     </label>
@@ -749,37 +791,31 @@ export default function InvoicePage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-900 mb-1">
-                      Phone Number
+                      Address Line 1
                     </label>
                     <input
-                      type="tel"
-                      value={invoiceData.company.phone}
+                      type="text"
+                      value={invoiceData.billing_address.line1}
                       onChange={(e) =>
-                        updateInvoiceData("company", {
-                          ...invoiceData.company,
-                          phone: e.target.value,
+                        updateInvoiceData("billing_address", {
+                          ...invoiceData.billing_address,
+                          line1: e.target.value,
                         })
                       }
                       className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 text-slate-900"
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-900 mb-1">
-                      Address Line 1
+                      Address Line 2
                     </label>
                     <input
                       type="text"
-                      value={invoiceData.company.address.line1}
+                      value={invoiceData.billing_address.line2 || ""}
                       onChange={(e) =>
-                        updateInvoiceData("company", {
-                          ...invoiceData.company,
-                          address: {
-                            ...invoiceData.company.address,
-                            line1: e.target.value,
-                          },
+                        updateInvoiceData("billing_address", {
+                          ...invoiceData.billing_address,
+                          line2: e.target.value,
                         })
                       }
                       className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 text-slate-900"
@@ -791,14 +827,11 @@ export default function InvoicePage() {
                     </label>
                     <input
                       type="text"
-                      value={invoiceData.company.address.city}
+                      value={invoiceData.billing_address.city}
                       onChange={(e) =>
-                        updateInvoiceData("company", {
-                          ...invoiceData.company,
-                          address: {
-                            ...invoiceData.company.address,
-                            city: e.target.value,
-                          },
+                        updateInvoiceData("billing_address", {
+                          ...invoiceData.billing_address,
+                          city: e.target.value,
                         })
                       }
                       className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 text-slate-900"
@@ -810,14 +843,27 @@ export default function InvoicePage() {
                     </label>
                     <input
                       type="text"
-                      value={invoiceData.company.address.zip}
+                      value={invoiceData.billing_address.zip}
                       onChange={(e) =>
-                        updateInvoiceData("company", {
-                          ...invoiceData.company,
-                          address: {
-                            ...invoiceData.company.address,
-                            zip: e.target.value,
-                          },
+                        updateInvoiceData("billing_address", {
+                          ...invoiceData.billing_address,
+                          zip: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 text-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-900 mb-1">
+                      Country
+                    </label>
+                    <input
+                      type="text"
+                      value={invoiceData.billing_address.country}
+                      onChange={(e) =>
+                        updateInvoiceData("billing_address", {
+                          ...invoiceData.billing_address,
+                          country: e.target.value,
                         })
                       }
                       className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 text-slate-900"
@@ -1005,6 +1051,76 @@ export default function InvoicePage() {
                 </div>
               </div>
 
+              {/* Discount */}
+<div className="bg-white rounded-lg border border-slate-200 p-6">
+  <h2 className="text-lg font-medium text-slate-900 mb-4">Discount</h2>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label className="block text-sm font-medium text-slate-900 mb-1">
+        Trade Discount Amount
+      </label>
+      <input
+        type="number"
+        value={invoiceData.discount_amount}
+        onChange={(e) => {
+          const discountAmount = parseFloat(e.target.value) || 0;
+          
+          // Validate discount doesn't exceed subtotal
+          const maxDiscount = invoiceData.subtotal;
+          const validDiscount = Math.min(discountAmount, maxDiscount);
+          
+          const newTotal = invoiceData.subtotal + invoiceData.tax_amount + invoiceData.shipping_cost - validDiscount;
+          
+          setInvoiceData({
+            ...invoiceData,
+            discount_amount: validDiscount,
+            total: newTotal,
+          });
+        }}
+        min="0"
+        max={invoiceData.subtotal}
+        step="0.01"
+        className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 text-slate-900"
+      />
+    </div>
+    <div>
+      <label className="block text-sm font-medium text-slate-900 mb-1">
+        Discount Percentage
+      </label>
+      <input
+        type="number"
+        value={invoiceData.subtotal > 0 
+          ? ((invoiceData.discount_amount / invoiceData.subtotal) * 100).toFixed(1)
+          : "0"
+        }
+        onChange={(e) => {
+          const percentage = parseFloat(e.target.value) || 0;
+          
+          // Validate percentage doesn't exceed 100%
+          const validPercentage = Math.min(percentage, 100);
+          
+          const discountAmount = invoiceData.subtotal > 0 
+            ? (invoiceData.subtotal * validPercentage) / 100 
+            : 0;
+          
+          const newTotal = invoiceData.subtotal + invoiceData.tax_amount + invoiceData.shipping_cost - discountAmount;
+          
+          setInvoiceData({
+            ...invoiceData,
+            discount_amount: discountAmount,
+            total: newTotal,
+          });
+        }}
+        min="0"
+        max="100"
+        step="0.1"
+        className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 text-slate-900"
+      />
+      <span className="text-xs text-slate-500 mt-1">Max 100%</span>
+    </div>
+  </div>
+</div>
+
               {/* Totals */}
               <div className="bg-white rounded-lg border border-slate-200 p-6">
                 <div className="space-y-3">
@@ -1014,6 +1130,16 @@ export default function InvoicePage() {
                       {invoiceData.currency} {invoiceData.subtotal.toFixed(2)}
                     </span>
                   </div>
+                  {invoiceData.discount_amount > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">
+                        Trade Discount ({((invoiceData.discount_amount / invoiceData.subtotal) * 100).toFixed(1)}%):
+                      </span>
+                      <span className="font-medium text-slate-900">
+                        - {invoiceData.currency} {invoiceData.discount_amount.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span className="text-slate-600">Tax:</span>
                     <span className="font-medium text-slate-900">
@@ -1021,9 +1147,7 @@ export default function InvoicePage() {
                     </span>
                   </div>
                   <div className="flex justify-between border-t pt-3">
-                    <span className="font-semibold text-slate-900 text-lg">
-                      Total:
-                    </span>
+                    <span className="font-semibold text-slate-900 text-lg">Total:</span>
                     <span className="font-bold text-lg text-slate-900">
                       {invoiceData.currency} {invoiceData.total.toFixed(2)}
                     </span>
