@@ -8,18 +8,18 @@ class ShopifyClient {
   constructor() {
     const storeUrl = process.env.SHOPIFY_STORE_URL;
     this.accessToken = process.env.SHOPIFY_ADMIN_API_TOKEN!;
-    
+
     // Clean up the store URL to get the proper format
     if (!storeUrl) {
       throw new Error('SHOPIFY_STORE_URL is required');
     }
-    
+
     // Extract store name from URL if full URL is provided
     const storeMatch = storeUrl.match(/https?:\/\/([^.]+)\.myshopify\.com/);
     const storeName = storeMatch ? storeMatch[1] : storeUrl.replace(/https?:\/\//, '').replace('.myshopify.com/', '');
-    
+
     this.baseUrl = `https://${storeName}.myshopify.com/admin/api/2023-10`;
-    
+
     if (!this.accessToken) {
       throw new Error('SHOPIFY_ADMIN_API_TOKEN is required');
     }
@@ -27,7 +27,7 @@ class ShopifyClient {
 
   private async makeRequest(endpoint: string, options: RequestInit = {}) {
     const url = `${this.baseUrl}${endpoint}`;
-    
+
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -77,16 +77,16 @@ class ShopifyClient {
     return { data, pagination };
   }
 
-  async getOrders(limit = 50, status = 'any', pageInfo?: string): Promise<{orders: ShopifyOrder[], pagination: PaginationInfo}> {
+  async getOrders(limit = 50, status = 'any', pageInfo?: string): Promise<{ orders: ShopifyOrder[], pagination: PaginationInfo }> {
     try {
       let endpoint = `/orders.json?limit=${limit}&status=${status}&fields=id,order_number,name,email,created_at,updated_at,total_price,subtotal_price,total_tax,currency,financial_status,fulfillment_status,customer,line_items,shipping_address,billing_address`;
-      
+
       if (pageInfo) {
         endpoint += `&page_info=${pageInfo}`;
       }
 
       const { data, pagination }: { data: ShopifyOrdersResponse, pagination: PaginationInfo } = await this.makeRequest(endpoint);
-      
+
       // Mark as regular orders
       const orders = (data.orders || []).map(order => ({
         ...order,
@@ -100,19 +100,19 @@ class ShopifyClient {
     }
   }
 
-  async getDraftOrders(limit = 50, pageInfo?: string): Promise<{orders: ShopifyOrder[], pagination: PaginationInfo}> {
+  async getDraftOrders(limit = 50, pageInfo?: string): Promise<{ orders: ShopifyOrder[], pagination: PaginationInfo }> {
     try {
       let endpoint = `/draft_orders.json?limit=${limit}`;
-      
+
       // Don't limit fields initially to see what we get
       // endpoint += `&fields=id,name,email,created_at,updated_at,total_price,subtotal_price,total_tax,currency,status,customer,line_items,shipping_address,billing_address,invoice_sent_at,completed_at,note,tags`;
-      
+
       if (pageInfo) {
         endpoint += `&page_info=${pageInfo}`;
       }
 
       const { data, pagination }: { data: ShopifyDraftOrdersResponse, pagination: PaginationInfo } = await this.makeRequest(endpoint);
-      
+
       // Mark as draft orders and normalize the structure
       const orders = (data.draft_orders || []).map(order => ({
         ...order,
@@ -128,7 +128,7 @@ class ShopifyClient {
     }
   }
 
-  async getAllOrders(limit = 25, pageInfo?: string, orderType: 'all' | 'regular' | 'draft' = 'all'): Promise<{orders: ShopifyOrder[], pagination: PaginationInfo}> {
+  async getAllOrders(limit = 25, pageInfo?: string, orderType: 'all' | 'regular' | 'draft' = 'all'): Promise<{ orders: ShopifyOrder[], pagination: PaginationInfo }> {
     try {
       if (orderType === 'regular') {
         return await this.getOrders(limit, 'any', pageInfo);
@@ -197,12 +197,136 @@ class ShopifyClient {
     }
   }
 
+
+  async getProductMetaobjects(productId: string): Promise<unknown[]> {
+    try {
+      const graphqlQuery = `
+      query getProductMetaobjects($id: ID!) {
+        product(id: $id) {
+          metafields(first: 50) {
+            edges {
+              node {
+                id
+                key
+                value
+                type
+                namespace
+                definition {
+                  name
+                  type {
+                    name
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+
+      const response = await fetch(`${this.baseUrl.replace('/admin/api/2023-10', '')}/admin/api/2023-10/graphql.json`, {
+        method: 'POST',
+        headers: {
+          'X-Shopify-Access-Token': this.accessToken,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: graphqlQuery,
+          variables: {
+            id: `gid://shopify/Product/${productId}`
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('GraphQL request failed');
+      }
+
+      const data = await response.json();
+
+      if (data.errors) {
+        console.error('GraphQL errors:', data.errors);
+        return [];
+      }
+
+      return data.data?.product?.metafields?.edges?.map((edge: any) => edge.node) || [];
+
+    } catch (error) {
+      console.error('Error fetching metaobjects:', error);
+      return [];
+    }
+  }
+
+
+  async getMetaobjectData(metaobjectId: string): Promise<unknown> {
+    try {
+      console.log("🚀 ~ getMetaobjectData ~ metaobjectId:", metaobjectId);
+
+      const graphqlQuery = `
+      query getMetaobject($id: ID!) {
+        metaobject(id: $id) {
+          id
+          type
+          handle
+          fields {
+            key
+            value
+            type
+            definition {
+              name
+              type {
+                name
+              }
+            }
+          }
+        }
+      }
+    `;
+
+      const response = await fetch(`${this.baseUrl.replace('/admin/api/2023-10', '')}/admin/api/2023-10/graphql.json`, {
+        method: 'POST',
+        headers: {
+          'X-Shopify-Access-Token': this.accessToken,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: graphqlQuery,
+          variables: {
+            id: metaobjectId
+          }
+        })
+      });
+
+      if (!response.ok) {
+        console.error('GraphQL response not ok:', response.status, response.statusText);
+        throw new Error('GraphQL request failed');
+      }
+
+      const data = await response.json();
+      console.log("🚀 ~ getMetaobjectData ~ full response:", JSON.stringify(data, null, 2));
+
+      if (data.errors) {
+        console.error('GraphQL errors:', data.errors);
+        return null;
+      }
+
+      return data.data?.metaobject || null;
+
+    } catch (error) {
+      console.error('Error fetching metaobject:', error);
+      return null;
+    }
+  }
+
+
+
+
   async getProducts(limit = 50): Promise<ShopifyProduct[]> {
     try {
       const { data } = await this.makeRequest(
         `/products.json?limit=${limit}&fields=id,title,handle,status,created_at,updated_at,variants`
       );
-      
+
       return data.products || [];
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -214,8 +338,8 @@ class ShopifyClient {
   async testConnection(): Promise<{ success: boolean; store?: any; error?: string }> {
     try {
       const { data } = await this.makeRequest('/shop.json');
-      return { 
-        success: true, 
+      return {
+        success: true,
         store: {
           name: data.shop.name,
           domain: data.shop.domain,
@@ -223,22 +347,22 @@ class ShopifyClient {
         }
       };
     } catch (error) {
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   }
 
   async getCustomer(customerId: number): Promise<any> {
-  try {
-    const { data } = await this.makeRequest(`/customers/${customerId}.json`);
-    return data.customer;
-  } catch (error) {
-    console.error('Error fetching customer:', error);
-    return null;
+    try {
+      const { data } = await this.makeRequest(`/customers/${customerId}.json`);
+      return data.customer;
+    } catch (error) {
+      console.error('Error fetching customer:', error);
+      return null;
+    }
   }
-}
 
   async searchProducts(query: string, limit = 20): Promise<ShopifyProduct[]> {
     try {
@@ -288,7 +412,7 @@ class ShopifyClient {
       }
 
       const data = await response.json();
-      
+
       if (data.errors) {
         throw new Error(data.errors[0].message);
       }
@@ -309,18 +433,18 @@ class ShopifyClient {
       return products;
     } catch (error) {
       console.error('GraphQL search failed, falling back to REST:', error);
-      
+
       // Fallback: Get all products and filter client-side
       try {
         const { data } = await this.makeRequest(
           `/products.json?limit=250&fields=id,title,handle,variants`
         );
-        
+
         const allProducts = data.products || [];
-        const filteredProducts = allProducts.filter((product: any) => 
+        const filteredProducts = allProducts.filter((product: any) =>
           product.title.toLowerCase().includes(query.toLowerCase())
         );
-        
+
         return filteredProducts.slice(0, limit);
       } catch (fallbackError) {
         console.error('Fallback search failed:', fallbackError);
@@ -328,21 +452,21 @@ class ShopifyClient {
       }
     }
   }
-  
+
   async getShopDetails(): Promise<{ success: boolean; shop?: any; error?: string }> {
-  try {
-    const { data } = await this.makeRequest('/shop.json');
-    return { 
-      success: true, 
-      shop: data.shop
-    };
-  } catch (error) {
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
-    };
+    try {
+      const { data } = await this.makeRequest('/shop.json');
+      return {
+        success: true,
+        shop: data.shop
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
   }
-}
 
 }
 
