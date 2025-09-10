@@ -1,79 +1,19 @@
-// app/dashboard/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
-  const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-
-    const checkAuth = () => {
-      const token = localStorage.getItem("auth_token");
-
-      if (!token) {
-        router.replace("/login");
-        return;
-      }
-
-      try {
-        const payload = JSON.parse(atob(token));
-        const isValid = payload.exp > Date.now();
-
-        if (!isValid) {
-          localStorage.removeItem("auth_token");
-          document.cookie =
-            "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-          router.replace("/login");
-          return;
-        }
-
-        setIsAuthenticated(true);
-        setLoading(false);
-      } catch (error) {
-        localStorage.removeItem("auth_token");
-        document.cookie =
-          "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-        router.replace("/login");
-      }
-    };
-
-    checkAuth();
-  }, [mounted, router]);
-
-  const handleLogout = () => {
-    localStorage.removeItem("auth_token");
-    router.replace("/login");
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      router.push('/login');
+    }
   };
-
-  // Prevent hydration issues
-  if (!mounted) {
-    return null;
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-slate-300 border-t-slate-900 mx-auto"></div>
-          <p className="mt-2 text-slate-600 text-sm">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return null; // Will redirect
-  }
 
   return (
     <div className="min-h-screen bg-slate-50">

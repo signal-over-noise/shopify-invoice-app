@@ -148,7 +148,7 @@ export default function ProductSearchDropdown({
                 {option.product.title}
               </div>
               <div className="text-slate-600">
-                {option.variant.title} - £{option.variant.price}
+                {option.variant.title} - {option.variant.price}
                 {option.variant.sku && (
                   <span className="ml-2 text-slate-500">({option.variant.sku})</span>
                 )}

@@ -22,7 +22,7 @@ export default function CanvasPDFPreview({
       setLoading(true);
 
       const { pdf: pdfRenderer } = await import("@react-pdf/renderer");
-      const { InvoicePDFTemplate } = await import(
+      const { Atelier001PDFTemplate } = await import(
         "@/components/InvoicePDFTemplate"
       );
       const React = await import("react");
@@ -56,7 +56,7 @@ export default function CanvasPDFPreview({
         line_items: lineItemsWithImages,
       };
 
-      const pdfDocument: any = React.createElement(InvoicePDFTemplate, {
+      const pdfDocument: any = React.createElement(Atelier001PDFTemplate, {
         invoiceData: invoiceDataWithImages,
       });
 

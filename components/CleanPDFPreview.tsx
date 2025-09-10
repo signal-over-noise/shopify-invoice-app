@@ -1,16 +1,57 @@
 "use client";
 
 import { InvoiceData } from "@/types/invoice";
+import React from "react";
 
 interface Atelier001PreviewProps {
   invoiceData: InvoiceData;
   productImages: Record<number, string>;
+  productMeta: Record<number, any>;
 }
 
-export default function Atelier001Preview({
+export default function InvoicePDFTemplate({
   invoiceData,
   productImages,
 }: Atelier001PreviewProps) {
+
+  const formatCurrency = (amount: number): string => {
+    return amount.toLocaleString('en-GB', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
+  
+    const getCurrencySymbol = (currencyCode: string): string => {
+    const currencyMap: Record<string, string> = {
+      'GBP': '£',
+      'USD': '$',
+      'EUR': '€',
+      'CAD': 'C$',
+      'AUD': 'A$',
+      'JPY': '¥',
+      'CHF': 'CHF',
+      'SEK': 'kr',
+      'NOK': 'kr',
+      'DKK': 'kr',
+      'PLN': 'zł',
+      'CZK': 'Kč',
+      'HUF': 'Ft',
+      'INR': '₹',
+      'CNY': '¥',
+      'KRW': '₩',
+      'SGD': 'S$',
+      'HKD': 'HK$',
+      'NZD': 'NZ$',
+      'ZAR': 'R',
+      'BRL': 'R$',
+      'MXN': '$',
+      'RUB': '₽',
+    };
+    
+    return currencyMap[currencyCode.toUpperCase()] || currencyCode;
+  };
+
   console.log("🚀 ~ Atelier001Preview ~ invoiceData:", invoiceData);
 
   return (
@@ -179,7 +220,6 @@ export default function Atelier001Preview({
                           COMPANY DETAILS
                         </td>
                         <td>
-                            <br />
                             {invoiceData.billing_address?.line1 && (
                               <>
                                 {invoiceData.billing_address.line1}
@@ -313,8 +353,8 @@ export default function Atelier001Preview({
               <tbody>
                 {invoiceData.line_items.map((item, index) => {
                   return (
-                    <>
-                      <tr key={index} style={{ marginTop: "15px" }}>
+                    <React.Fragment key={`item-${index}`}>
+                      <tr key={`qty-${index}`} style={{ marginTop: "15px" }}>
                         <td
                           style={{
                             width: "50%",
@@ -328,7 +368,7 @@ export default function Atelier001Preview({
                           QTY {item.quantity}
                         </td>
                       </tr>
-                      <tr>
+                      <tr key={`details-${index}`}>
                         <td
                           style={{
                             width: "50%",
@@ -369,7 +409,28 @@ export default function Atelier001Preview({
                                 }}
                               />
                             )}
-                            {item.title}
+                            <div>
+                              <div style={{ fontWeight: 500, fontSize: "14px" }}>
+                                {item.title}
+                              </div>
+                              {item.meta && Object.keys(item.meta).some(key => item.meta![key as keyof typeof item.meta]) && (
+                                <div style={{ 
+                                  fontSize: "11px", 
+                                  color: "#999", 
+                                  lineHeight: "1.4",
+                                  fontWeight: 400,
+                                  paddingRight: "80px"
+                                }}>
+                                  {[
+                                    item.meta.collection,
+                                    item.meta.category,
+                                    item.meta.product_type,
+                                    item.meta.finishes,
+                                    item.meta.dimensions
+                                  ].filter(Boolean).join(' | ')}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </td>
                         <td
@@ -382,7 +443,7 @@ export default function Atelier001Preview({
                             verticalAlign: "top",
                           }}
                         >
-                          £ {item.price.toFixed(2)}
+                          {getCurrencySymbol(invoiceData.currency)} {formatCurrency(item.price)}
                         </td>
                         <td
                           style={{
@@ -394,10 +455,10 @@ export default function Atelier001Preview({
                             verticalAlign: "top",
                           }}
                         >
-                          £ {item.total.toFixed(2)}
+                          {getCurrencySymbol(invoiceData.currency)} {formatCurrency(item.total)}
                         </td>
                       </tr>
-                    </>
+                    </React.Fragment>
                   );
                 })}
                 <tr>
@@ -416,7 +477,7 @@ export default function Atelier001Preview({
                             fontWeight: 400,
                             fontSize: "11px",
                             verticalAlign: "top",
-                          }}>£ {invoiceData.total.toFixed(2)}</td>
+                          }}>{getCurrencySymbol(invoiceData.currency)} {formatCurrency(invoiceData.subtotal)}</td>
                 </tr>
                 <tr>
                   <td></td>
@@ -435,18 +496,22 @@ export default function Atelier001Preview({
                   ).toFixed(0)}
                   % </td>
                   <td style={{
-                            width: "25%",
-                            textAlign: "left",
-                            color: "#777",
-                            fontWeight: 400,
-                            fontSize: "11px",
-                          }}>- £{" "}
-                  {invoiceData.discount_amount.toFixed(2)}</td>
+                    width: "25%",
+                    textAlign: "left",
+                    color: "#777",
+                    fontWeight: 400,
+                    fontSize: "11px",
+                    position: "relative",
+                  }}>
+                    <div style={{ position: "absolute", left: -8, top: 0 }}>- </div> 
+                  {getCurrencySymbol(invoiceData.currency)}{" "}
+                  {formatCurrency(invoiceData.discount_amount)}
+                  </td>
                 </tr>
                 <tr>
                   <td></td>
                   <td style={{ paddingTop: "15px", color: "black", fontSize: "14px" }}>TOTAL EX VAT</td>
-                  <td style={{ paddingTop: "15px", color: "black", fontSize: "14px" }}>£ {invoiceData.total.toFixed(2)}</td>
+                  <td style={{ paddingTop: "15px", color: "black", fontSize: "14px" }}>{getCurrencySymbol(invoiceData.currency)} {formatCurrency(invoiceData.total)}</td>
                 </tr>
               </tbody>
             </table>
@@ -536,9 +601,9 @@ export default function Atelier001Preview({
                   lineHeight: "1.2",
                 }}
               >
-                <div style={{ textAlign: "center", fontSize: "10px", color: "#777", marginTop: "3rem"}}>
+                <div style={{ textAlign: "center", fontSize: "10px", color: "#777", marginTop: "5rem"}}>
                   <p>ATELIER001 | UNIT 102 BUSPACE STUDIOS | CONLAN STREET | LONDON W10 5AP | UK</p>
-                  <p style={{ letterSpacing: "2px" }}>INFO@ATELIER001.COM | T +44(0)2037780858 | REG11953781 | VAT 334486000</p>
+                  <p>INFO@ATELIER001.COM | T +44(0)2037780858 | REG11953781 | VAT 334486000</p>
                 </div>
               </div>
             </div>

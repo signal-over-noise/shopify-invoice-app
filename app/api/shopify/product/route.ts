@@ -14,9 +14,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get basic product data
     const product = await shopifyClient.getProduct(parseInt(productId));
-
     if (!product) {
       return NextResponse.json(
         { success: false, error: 'Product not found' },
@@ -24,27 +22,54 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get metaobjects using GraphQL
     const metaobjects = await shopifyClient.getProductMetaobjects(productId);
 
-    const technicalInfo = metaobjects.find((meta: any) => meta?.key === 'technical_information_s');
-    console.log("🚀 ~ GET ~ technicalInfo:", technicalInfo);
+    // Extract specific metafields using correct field names
+    const productMeta = {
+      collection: '',
+      category: '',
+      product_type: '',
+      finishes: ''
+    };
 
-    let technicalData = null;
-    if (technicalInfo?.value) {
-      try {
-        // Parse the metaobject reference IDs from the value
-        const metaobjectIds = JSON.parse(technicalInfo.value);
-
-        // Fetch the actual metaobject data for the first ID
-        if (metaobjectIds.length > 0) {
-          technicalData = await shopifyClient.getMetaobjectData(metaobjectIds[0]);
-          console.log("🚀 ~ GET ~ technicalData:", technicalData);
+    metaobjects.forEach((meta: any) => {
+      const key = meta?.key;
+      
+      // Use exact field names from Shopify
+      if (key === 'collections') {
+        // Parse JSON array and take first value
+        try {
+          const collections = JSON.parse(meta.value);
+          productMeta.collection = collections[0] || '';
+        } catch {
+          productMeta.collection = meta.value;
         }
-      } catch (parseError) {
-        console.error('Error parsing metaobject references:', parseError);
       }
-    }
+      
+      if (key === 'product_category') {
+        productMeta.category = meta.value || '';
+      }
+      
+      if (key === 'categorys') {
+        // Parse JSON array and take first value for product type
+        try {
+          const categories = JSON.parse(meta.value);
+          productMeta.product_type = categories[0] || '';
+        } catch {
+          productMeta.product_type = meta.value;
+        }
+      }
+      
+      if (key === 'finishs') {
+        // Parse JSON array and take first value
+        try {
+          const finishes = JSON.parse(meta.value);
+          productMeta.finishes = finishes[0] || '';
+        } catch {
+          productMeta.finishes = meta.value;
+        }
+      }
+    });
 
     return NextResponse.json({
       success: true,
@@ -53,8 +78,7 @@ export async function GET(request: NextRequest) {
         title: product.title,
         images: product.images || [],
         variants: product.variants || [],
-        metaobjects: metaobjects || [],
-        technicalInfo: technicalData
+        meta: productMeta
       }
     });
 
@@ -66,4 +90,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

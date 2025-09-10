@@ -9,6 +9,13 @@ export interface InvoiceLineItem {
   discount: number;
   total: number;
   image_url?: string;
+  meta?: {
+    collection?: string;
+    category?: string;
+    product_type?: string;
+    finishes?: string;
+    dimensions?: string;
+  };
 }
 
 export interface InvoiceCustomer {
@@ -31,7 +38,7 @@ export interface InvoiceData {
   order_id?: number;
   order_number?: string;
   order_date: string;
-  
+  logoBase64?: string | null;
   // Customer Information
   customer: InvoiceCustomer;
   

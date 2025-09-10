@@ -12,6 +12,7 @@ export default function InvoicePage() {
   const [order, setOrder] = useState<ShopifyOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
+  const [productMeta, setProductMeta] = useState<Record<number, any>>({});
   const [productImages, setProductImages] = useState<Record<number, string>>(
     {}
   );
@@ -27,6 +28,38 @@ export default function InvoicePage() {
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
+
+  const extractDimensions = (title: string) => {
+    // Regex patterns to match common dimension formats
+    const patterns = [
+      /(\d+(?:\.\d+)?cm\s*\([^)]+\))/i,  // 70cm (27.5")
+      /(\d+(?:\.\d+)?"[^"]*")/i,         // 27.5"
+      /(\d+(?:\.\d+)?cm)/i,              // 70cm
+      /(\d+(?:\.\d+)?mm)/i,              // 100mm
+      /(\d+(?:\.\d+)?m\s*\([^)]+\))/i,   // 1m (39.4")
+      /(\d+(?:\.\d+)?ft)/i,              // 3ft
+    ];
+
+    for (const pattern of patterns) {
+      const match = title.match(pattern);
+      if (match) {
+        return match[1];
+      }
+    }
+    return null;
+  };
+
+  const cleanTitle = (title: string) => {
+    // Remove dimension patterns from title
+    return title
+      .replace(/\s*-\s*\d+(?:\.\d+)?cm\s*\([^)]+\)/i, '')
+      .replace(/\s*-\s*\d+(?:\.\d+)?"[^"]*"/i, '')
+      .replace(/\s*-\s*\d+(?:\.\d+)?cm/i, '')
+      .replace(/\s*-\s*\d+(?:\.\d+)?mm/i, '')
+      .replace(/\s*-\s*\d+(?:\.\d+)?m\s*\([^)]+\)/i, '')
+      .replace(/\s*-\s*\d+(?:\.\d+)?ft/i, '')
+      .trim();
+  };
 
   useEffect(() => {
     if (orderId && orderType) {
@@ -83,110 +116,146 @@ export default function InvoicePage() {
   };
 
   const fetchProductImages = async (lineItems: any[]) => {
-    const imagePromises = lineItems
-      .filter((item) => item.product_id)
-      .map(async (item) => {
-        try {
-          const response = await fetch(
-            `/api/shopify/product?id=${item.product_id}`
-          );
-          const data = await response.json();
+  const imagePromises = lineItems
+    .filter((item) => item.product_id)
+    .map(async (item) => {
+      try {
+        const response = await fetch(
+          `/api/shopify/product?id=${item.product_id}`
+        );
+        const data = await response.json();
 
-          if (data.success && data.product.images.length > 0) {
-            return {
-              productId: item.product_id,
-              imageUrl: data.product.images[0].src,
-            };
-          }
-        } catch (error) {
-          console.error("Error fetching product image:", error);
+        if (data.success) {
+          return {
+            productId: item.product_id,
+            imageUrl: data.product.images.length > 0 ? data.product.images[0].src : null,
+            meta: data.product.meta || {}
+          };
         }
-        return null;
-      });
-
-    const imageResults = await Promise.all(imagePromises);
-    const imageMap: Record<number, string> = {};
-
-    imageResults.forEach((result) => {
-      if (result) {
-        imageMap[result.productId] = result.imageUrl;
+      } catch (error) {
+        console.error("Error fetching product data:", error);
       }
+      return null;
     });
 
-    setProductImages(imageMap);
-  };
+  const imageResults = await Promise.all(imagePromises);
+  const imageMap: Record<number, string> = {};
+  const metaMap: Record<number, any> = {};
+
+  imageResults.forEach((result) => {
+    if (result) {
+      if (result.imageUrl) {
+        imageMap[result.productId] = result.imageUrl;
+      }
+      if (result.meta) {
+        metaMap[result.productId] = result.meta;
+      }
+    }
+  });
+
+  setProductImages(imageMap);
+  setProductMeta(metaMap); 
+};
 
   const convertOrderToInvoice = async (orderData: ShopifyOrder) => {
-    const companyDetails = await fetchShopDetails();
-    const customerName = getCustomerName(orderData);
-    const customerEmail = orderData.email || "No email provided";
-    const totalDiscount = orderData.line_items.reduce(
-      (sum, item) => sum + parseFloat(item.total_discount || "0"), 
-      0
-    );
+  const companyDetails = await fetchShopDetails();
+  const customerName = getCustomerName(orderData);
+  const customerEmail = orderData.email || "No email provided";
+  const totalDiscount = orderData.line_items.reduce(
+    (sum, item) => sum + parseFloat(item.total_discount || "0"), 
+    0
+  );
 
-    const lineItems: InvoiceLineItem[] = orderData.line_items.map(
-      (item, index) => ({
+  // Fetch meta information for each line item with product_id
+  const lineItems: InvoiceLineItem[] = await Promise.all(
+    orderData.line_items.map(async (item, index) => {
+      let meta = {};
+      
+      if (item.product_id) {
+        try {
+          const response = await fetch(`/api/shopify/product?id=${item.product_id}`);
+          const data = await response.json();
+          if (data.success && data.product.meta) {
+            meta = data.product.meta;
+          }
+        } catch (error) {
+          console.error('Error fetching product meta:', error);
+        }
+      }
+
+      const originalTitle = item.title || item.name;
+      const dimensions = extractDimensions(originalTitle);
+      const cleanedTitle = cleanTitle(originalTitle);
+      
+      if (dimensions) {
+        meta = {
+          ...meta,
+          dimensions: dimensions
+        };
+      }
+
+
+      return {
         id: `${item.id || index}`,
         product_id: item.product_id,
         variant_id: item.variant_id,
-        title: item.title || item.name,
+        title: cleanedTitle,
         sku: item.sku || "",
         quantity: item.quantity,
         price: parseFloat(item.price),
         discount: parseFloat(item.total_discount || "0"),
-        total:
-          parseFloat(item.price) * item.quantity -
-          parseFloat(item.total_discount || "0"),
-      })
-    );
+        total: parseFloat(item.price) * item.quantity - parseFloat(item.total_discount || "0"),
+        meta: meta
+      };
+    })
+  );
 
-    const invoiceData: InvoiceData = {
-      order_id: orderData.id,
-      order_number: orderData.order_number?.toString() || orderData.name,
-      order_date: orderData.created_at,
+  const invoiceData: InvoiceData = {
+    order_id: orderData.id,
+    order_number: orderData.order_number?.toString() || orderData.name,
+    order_date: orderData.created_at,
 
-      customer: {
-        name: customerName,
-        email: customerEmail,
-        mobile: orderData.billing_address?.phone || orderData.customer?.phone || "",
-        telephone: "",
-        address: extractAddress(
-          orderData.shipping_address || orderData.billing_address
-        ),
-      },
+    customer: {
+      name: customerName,
+      email: customerEmail,
+      mobile: orderData.billing_address?.phone || orderData.customer?.phone || "",
+      telephone: "",
+      address: extractAddress(
+        orderData.shipping_address || orderData.billing_address
+      ),
+    },
 
-      billing_address: extractAddress(orderData.billing_address || orderData.customer?.default_address),
-      shipping_address: extractAddress(orderData.shipping_address),
-      same_as_billing: !orderData.shipping_address,
+    billing_address: extractAddress(orderData.billing_address || orderData.customer?.default_address),
+    shipping_address: extractAddress(orderData.shipping_address),
+    same_as_billing: !orderData.shipping_address,
 
-      invoice_number: `INV-${Date.now()}`,
-      invoice_date: new Date().toISOString().split("T")[0],
-      client_reference: "",
+    invoice_number: `INV-${Date.now()}`,
+    invoice_date: new Date().toISOString().split("T")[0],
+    client_reference: "",
 
-      company: {
-        name: "",
-        phone: companyDetails.phone,
-        address: companyDetails.address,
-      },
+    company: {
+      name: "",
+      phone: companyDetails.phone,
+      address: companyDetails.address,
+    },
 
-      delivery_terms: "EXW",
+    delivery_terms: "EXW",
 
-      line_items: lineItems,
+    line_items: lineItems,
 
-      subtotal: parseFloat(orderData.subtotal_price),
-      tax_rate: 0,
-      tax_amount: parseFloat(orderData.total_tax || "0"),
-      shipping_cost: 0,
-      discount_amount: totalDiscount,
-      total: parseFloat(orderData.total_price),
+    subtotal: parseFloat(orderData.subtotal_price),
+    tax_rate: 0,
+    tax_amount: parseFloat(orderData.total_tax || "0"),
+    shipping_cost: 0,
+    discount_amount: totalDiscount,
+    total: parseFloat(orderData.total_price),
 
-      currency: orderData.currency,
-      terms: "Payment due within 30 days",
-    };
-
-    setInvoiceData(invoiceData);
+    currency: orderData.currency,
+    terms: "Payment due within 30 days",
   };
+
+  setInvoiceData(invoiceData);
+};
 
   const initializeEmptyForm = async () => {
     const companyDetails = await fetchShopDetails();
@@ -229,7 +298,7 @@ export default function InvoicePage() {
       shipping_cost: 0,
       discount_amount: 0,
       total: 0,
-      currency: "£",
+      currency: "GBR",
       terms: "Payment due within 30 days",
     };
 
@@ -399,9 +468,7 @@ export default function InvoicePage() {
       clearError("generatePDF");
 
       const { pdf } = await import("@react-pdf/renderer");
-      const { InvoicePDFTemplate } = await import(
-        "@/components/InvoicePDFTemplate"
-      );
+      const { Atelier001PDFTemplate } = await import("@/components/InvoicePDFTemplate");
       const React = await import("react");
 
       const validation = validateInvoiceData(invoiceData);
@@ -416,7 +483,7 @@ export default function InvoicePage() {
 
       const invoiceDataWithImages = await prepareInvoiceDataForPDF(invoiceData);
 
-      const pdfDocument: any = React.createElement(InvoicePDFTemplate, {
+      const pdfDocument: any = React.createElement(Atelier001PDFTemplate, {
         invoiceData: invoiceDataWithImages,
       });
       const blob = await pdf(pdfDocument).toBlob();
@@ -477,24 +544,46 @@ export default function InvoicePage() {
   const prepareInvoiceDataForPDF = async (
     data: InvoiceData
   ): Promise<InvoiceData> => {
+    const logoBase64 = await convertImageToBase64('/logo.png');
     const lineItemsWithImages = await Promise.all(
       data.line_items.map(async (item) => {
+        let processedItem = { ...item };
+        
+        // Handle image conversion
         if (item.product_id && productImages[item.product_id]) {
           const base64Image = await convertImageToBase64(
             productImages[item.product_id]
           );
-          return {
-            ...item,
-            image_url: base64Image || undefined,
+          processedItem.image_url = base64Image || undefined;
+        }
+        
+        // Extract dimensions from title and clean it
+        const dimensions = extractDimensions(item.title);
+        const cleanedTitle = cleanTitle(item.title);
+        
+        // Update title
+        processedItem.title = cleanedTitle;
+        
+        // Add dimensions to meta if found
+        if (dimensions && item.meta) {
+          processedItem.meta = {
+            ...item.meta,
+            dimensions: dimensions
+          };
+        } else if (dimensions) {
+          processedItem.meta = {
+            dimensions: dimensions
           };
         }
-        return item;
+        
+        return processedItem;
       })
     );
 
     return {
       ...data,
       line_items: lineItemsWithImages,
+      logoBase64: logoBase64,
     };
   };
 
@@ -923,11 +1012,33 @@ export default function InvoicePage() {
                                 [item.id]: value,
                               }));
                             }}
-                            onSelectProduct={(product, variant) => {
+                            onSelectProduct={async (product, variant) => {
                               const price = parseFloat(variant.price);
                               const quantity = item.quantity;
                               const discount = item.discount;
                               const total = quantity * price - discount;
+
+                              const fullTitle = `${product.title} - ${variant.title}`;
+                              const dimensions = extractDimensions(fullTitle);
+                              const cleanedTitle = cleanTitle(fullTitle);
+
+                              // Fetch meta information for the selected product
+                              let meta = {};
+                              try {
+                                const response = await fetch(`/api/shopify/product?id=${product.id}`);
+                                const data = await response.json();
+                                if (data.success && data.product.meta) {
+                                  meta = data.product.meta;
+                                }
+                                if (dimensions) {
+                                  meta = {
+                                    ...meta,
+                                    dimensions: dimensions
+                                  };
+                                }
+                              } catch (error) {
+                                console.error('Error fetching product meta:', error);
+                              }
 
                               setInvoiceData((prevData) => {
                                 if (!prevData) return prevData;
@@ -939,10 +1050,11 @@ export default function InvoicePage() {
                                         ...lineItem,
                                         product_id: product.id,
                                         variant_id: variant.id,
-                                        title: `${product.title} - ${variant.title}`,
+                                        title: cleanedTitle,
                                         sku: variant.sku || "",
                                         price: price,
                                         total: total,
+                                        meta: meta, // Add the fetched meta information
                                       };
                                     }
                                     return lineItem;
@@ -969,7 +1081,7 @@ export default function InvoicePage() {
 
                               setProductSearchValues((prev) => ({
                                 ...prev,
-                                [item.id]: `${product.title} - ${variant.title}`,
+                                [item.id]: cleanedTitle,
                               }));
 
                               fetchSingleProductImage(product.id, item.id);
@@ -1052,74 +1164,74 @@ export default function InvoicePage() {
               </div>
 
               {/* Discount */}
-<div className="bg-white rounded-lg border border-slate-200 p-6">
-  <h2 className="text-lg font-medium text-slate-900 mb-4">Discount</h2>
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <div>
-      <label className="block text-sm font-medium text-slate-900 mb-1">
-        Trade Discount Amount
-      </label>
-      <input
-        type="number"
-        value={invoiceData.discount_amount}
-        onChange={(e) => {
-          const discountAmount = parseFloat(e.target.value) || 0;
-          
-          // Validate discount doesn't exceed subtotal
-          const maxDiscount = invoiceData.subtotal;
-          const validDiscount = Math.min(discountAmount, maxDiscount);
-          
-          const newTotal = invoiceData.subtotal + invoiceData.tax_amount + invoiceData.shipping_cost - validDiscount;
-          
-          setInvoiceData({
-            ...invoiceData,
-            discount_amount: validDiscount,
-            total: newTotal,
-          });
-        }}
-        min="0"
-        max={invoiceData.subtotal}
-        step="0.01"
-        className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 text-slate-900"
-      />
-    </div>
-    <div>
-      <label className="block text-sm font-medium text-slate-900 mb-1">
-        Discount Percentage
-      </label>
-      <input
-        type="number"
-        value={invoiceData.subtotal > 0 
-          ? ((invoiceData.discount_amount / invoiceData.subtotal) * 100).toFixed(1)
-          : "0"
-        }
-        onChange={(e) => {
-          const percentage = parseFloat(e.target.value) || 0;
-          
-          // Validate percentage doesn't exceed 100%
-          const validPercentage = Math.min(percentage, 100);
-          
-          const discountAmount = invoiceData.subtotal > 0 
-            ? (invoiceData.subtotal * validPercentage) / 100 
-            : 0;
-          
-          const newTotal = invoiceData.subtotal + invoiceData.tax_amount + invoiceData.shipping_cost - discountAmount;
-          
-          setInvoiceData({
-            ...invoiceData,
-            discount_amount: discountAmount,
-            total: newTotal,
-          });
-        }}
-        min="0"
-        max="100"
-        step="0.1"
-        className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 text-slate-900"
-      />
-      <span className="text-xs text-slate-500 mt-1">Max 100%</span>
-    </div>
-  </div>
-</div>
+              <div className="bg-white rounded-lg border border-slate-200 p-6">
+                <h2 className="text-lg font-medium text-slate-900 mb-4">Discount</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-900 mb-1">
+                      Trade Discount Amount
+                    </label>
+                    <input
+                      type="number"
+                      value={invoiceData.discount_amount}
+                      onChange={(e) => {
+                        const discountAmount = parseFloat(e.target.value) || 0;
+                        
+                        // Validate discount doesn't exceed subtotal
+                        const maxDiscount = invoiceData.subtotal;
+                        const validDiscount = Math.min(discountAmount, maxDiscount);
+                        
+                        const newTotal = invoiceData.subtotal + invoiceData.tax_amount + invoiceData.shipping_cost - validDiscount;
+                        
+                        setInvoiceData({
+                          ...invoiceData,
+                          discount_amount: validDiscount,
+                          total: newTotal,
+                        });
+                      }}
+                      min="0"
+                      max={invoiceData.subtotal}
+                      step="0.01"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 text-slate-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-900 mb-1">
+                      Discount Percentage
+                    </label>
+                    <input
+                      type="number"
+                      value={invoiceData.subtotal > 0 
+                        ? ((invoiceData.discount_amount / invoiceData.subtotal) * 100).toFixed(1)
+                        : "0"
+                      }
+                      onChange={(e) => {
+                        const percentage = parseFloat(e.target.value) || 0;
+                        
+                        // Validate percentage doesn't exceed 100%
+                        const validPercentage = Math.min(percentage, 100);
+                        
+                        const discountAmount = invoiceData.subtotal > 0 
+                          ? (invoiceData.subtotal * validPercentage) / 100 
+                          : 0;
+                        
+                        const newTotal = invoiceData.subtotal + invoiceData.tax_amount + invoiceData.shipping_cost - discountAmount;
+                        
+                        setInvoiceData({
+                          ...invoiceData,
+                          discount_amount: discountAmount,
+                          total: newTotal,
+                        });
+                      }}
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 text-slate-900"
+                    />
+                    <span className="text-xs text-slate-500 mt-1">Max 100%</span>
+                  </div>
+                </div>
+              </div>
 
               {/* Totals */}
               <div className="bg-white rounded-lg border border-slate-200 p-6">
@@ -1164,6 +1276,7 @@ export default function InvoicePage() {
             <CleanPDFPreview
               invoiceData={invoiceData}
               productImages={productImages}
+              productMeta={productMeta}
             />
           </div>
         </div>

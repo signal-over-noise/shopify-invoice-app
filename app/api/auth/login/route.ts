@@ -12,51 +12,37 @@ interface LoginResponse {
   message?: string;
 }
 
-export async function POST(request: NextRequest): Promise<NextResponse<LoginResponse>> {
+export async function POST(request: NextRequest) {
   try {
-    const body: LoginRequest = await request.json();
-    const { username, password } = body;
+    const { username, password } = await request.json();
 
-    // Validate request body
-    if (!username || !password) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          message: 'Username and password are required' 
-        },
-        { status: 400 }
-      );
-    }
-
-    // Validate credentials
     if (validateCredentials(username, password)) {
       const token = createToken(username);
       
-      return NextResponse.json(
-        { 
-          success: true, 
-          token,
-          message: 'Login successful' 
-        },
-        { status: 200 }
-      );
+      const response = NextResponse.json({ 
+        success: true, 
+        message: 'Login successful' 
+      });
+      
+      // Set HTTP-only cookie
+      response.cookies.set('auth_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 24 * 60 * 60, // 24 hours
+        path: '/'
+      });
+      
+      return response;
     } else {
       return NextResponse.json(
-        { 
-          success: false, 
-          message: 'Invalid username or password' 
-        },
+        { success: false, message: 'Invalid credentials' },
         { status: 401 }
       );
     }
   } catch (error) {
-    console.error('Login error:', error);
-    
     return NextResponse.json(
-      { 
-        success: false, 
-        message: 'Internal server error' 
-      },
+      { success: false, message: 'Internal server error' },
       { status: 500 }
     );
   }

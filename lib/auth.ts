@@ -24,10 +24,13 @@ export function createToken(username: string): string {
  */
 export function verifyToken(token: string): TokenPayload | null {
   try {
+    console.log('Verifying token:', token);
     const payload: TokenPayload = JSON.parse(atob(token));
+    console.log('Parsed payload:', payload);
     
     // Check if token is expired
     if (payload.exp < Date.now()) {
+      console.log('Token expired');
       return null;
     }
     
@@ -52,30 +55,22 @@ export function validateCredentials(username: string, password: string): boolean
  * Client-side token management
  */
 export const tokenManager = {
-  setToken: (token: string) => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('auth_token', token);
+  // For client-side auth status checking
+  checkAuthStatus: async (): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/auth/me');
+      return response.ok;
+    } catch {
+      return false;
     }
   },
   
-  getToken: (): string | null => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('auth_token');
+  logout: async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout error:', error);
     }
-    return null;
-  },
-  
-  removeToken: () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token');
-    }
-  },
-  
-  isTokenValid: (): boolean => {
-    const token = tokenManager.getToken();
-    if (!token) return false;
-    
-    const payload = verifyToken(token);
-    return payload !== null;
   }
 };

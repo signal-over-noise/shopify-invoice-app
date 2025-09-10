@@ -12,38 +12,37 @@ export default function LoginPage() {
 
   const router = useRouter();
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setError("");
+  setLoading(true);
 
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password }),
-      });
+  try {
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username, password }),
+      credentials: 'include', // Important for cookies
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (data.success && data.token) {
-        // Store token in localStorage
-        tokenManager.setToken(data.token);
-
-        // Redirect to dashboard
-        router.push("/dashboard");
-      } else {
-        setError(data.message || "Login failed");
-      }
-    } catch (err) {
-      console.error("Login error:", err);
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
+    if (data.success) {
+      // No need to store token - it's in HTTP-only cookie
+      // Redirect to dashboard
+      router.push("/dashboard");
+    } else {
+      setError(data.message || "Login failed");
     }
-  };
+  } catch (err) {
+    console.error("Login error:", err);
+    setError("Something went wrong. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
