@@ -383,7 +383,7 @@ export const Atelier001PDFTemplate: React.FC<Atelier001PDFTemplateProps> = ({ in
     <Page size="A4" style={styles.page}>
       <View style={styles.header}>
         <View style={styles.logoWrapper}>
-          <Image src={invoiceData.logoBase64} style={styles.logoImage} />
+          <Image src={invoiceData.logoBase64!} style={styles.logoImage} />
         </View>
         <Text style={styles.pageCounter}>PAGE 01 | 03</Text>
       </View>
@@ -570,7 +570,7 @@ export const Atelier001PDFTemplate: React.FC<Atelier001PDFTemplateProps> = ({ in
     <Page size="A4" style={styles.page}>
       <View style={styles.header}>
         <View style={styles.logoWrapper}>
-          <Image src={invoiceData.logoBase64} style={styles.logoImage} />
+          <Image src={invoiceData.logoBase64!} style={styles.logoImage} />
         </View>
         <Text style={styles.pageCounter}>PAGE 02 | 03</Text>
       </View>
@@ -741,7 +741,7 @@ export const Atelier001PDFTemplate: React.FC<Atelier001PDFTemplateProps> = ({ in
     <Page size="A4" style={styles.page}>
       <View style={styles.header}>
         <View style={styles.logoWrapper}>
-          <Image src={invoiceData.logoBase64} style={styles.logoImage} />
+          <Image src={invoiceData.logoBase64!} style={styles.logoImage} />
         </View>
         <Text style={styles.pageCounter}>PAGE 03 | 03</Text>
       </View>
