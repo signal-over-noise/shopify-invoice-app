@@ -25,6 +25,7 @@ export default function InvoicePDFTemplate({
     const getCurrencySymbol = (currencyCode: string): string => {
     const currencyMap: Record<string, string> = {
       'GBP': '£',
+      'GBR': '£',
       'USD': '$',
       'EUR': '€',
       'CAD': 'C$',
